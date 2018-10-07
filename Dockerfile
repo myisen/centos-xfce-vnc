@@ -17,18 +17,39 @@ EXPOSE $VNC_PORT
 ENV HOME=/headless \
     TERM=xterm \
     STARTUPDIR=/dockerstartup \
-    INST_SCRIPTS=/headless/install \
+    DATADIR=/data \
     VNC_COL_DEPTH=24 \
     VNC_RESOLUTION=1280x1024 \
     VNC_PW=vncpassword \
     VNC_VIEW_ONLY=false
 WORKDIR $HOME
 
+### setup repositories
+COPY src/repos/*.repo /etc/yum.repos.d/
+COPY src/repos/RPM-GPG-KEY* /etc/pki/rpm-gpg/
+RUN  rpm --import /etc/pki/rpm-gpg/*
+
+### update OS
+RUN yum makecache fast && \
+    yum -y upgrade && \
+    yum clean all && \
+    rm -fr /var/cache/yum
+
+### Install core tools to make the rest easier
+RUN yum makecache fast && \
+    yum -y install man-db info deltarpm && \
+    yum clean all && \
+    rm -fr /var/cache/yum
+
 ### Install some common tools
 RUN yum makecache fast && \
-    yum -y install epel-release && \
-    yum -y upgrade && \
-    yum -y install vim sudo wget which net-tools bzip2 && \
+    yum -y install vim sudo wget which net-tools bzip2 unzip mlocate screen rsync && \
+    yum clean all && \
+    rm -fr /var/cache/yum
+
+### Install git
+RUN yum makecache fast && \
+    yum -y install git2u-gitk git2u-gui tig && \
     yum clean all && \
     rm -fr /var/cache/yum
 
@@ -56,7 +77,7 @@ RUN yum makecache fast && \
     rm /etc/xdg/autostart/xfce-polkit* && \
     /bin/dbus-uuidgen > /etc/machine-id
 
-ADD ./src/common/xfce/ $HOME/
+COPY ./src/common/xfce/ $HOME/
 
 ### configure startup
 RUN yum makecache fast && \
@@ -65,14 +86,18 @@ RUN yum makecache fast && \
     rm -fr /var/cache/yum && \
     echo 'source $STARTUPDIR/generate_container_user' >> $HOME/.bashrc
 
+COPY ./src/common/scripts $STARTUPDIR
 
-### Add all install scripts for further steps
-ADD ./src/common/install/ $INST_SCRIPTS/
-ADD ./src/centos/install/ $INST_SCRIPTS/
-RUN find $INST_SCRIPTS -name '*.sh' -exec chmod a+x {} +
+### perstent files
+RUN mkdir $DATADIR
+VOLUME $DATADIR
 
-ADD ./src/common/scripts $STARTUPDIR
-RUN $INST_SCRIPTS/set_user_permission.sh $STARTUPDIR $HOME
+### restore permissions
+RUN for var in $STARTUPDIR $HOME $DATADIR; do \
+    find "$var"/ -name '*.sh' -exec chmod $verbose a+x {} +; \
+    find "$var"/ -name '*.desktop' -exec chmod $verbose a+x {} +; \
+    chgrp -R 0 "$var" && chmod -R $verbose a+rw "$var" && find "$var" -type d -exec chmod $verbose a+x {} +; \
+    done
 
 USER 1000
 
