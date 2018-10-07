@@ -77,16 +77,16 @@ RUN yum makecache fast && \
     rm /etc/xdg/autostart/xfce-polkit* && \
     /bin/dbus-uuidgen > /etc/machine-id
 
-COPY ./src/common/xfce/ $HOME/
+### deliver files
+COPY src/common/xfce/ $HOME/
+COPY src/common/xfce/bashrc $HOME/.bashrc
+COPY src/common/scripts $STARTUPDIR
 
 ### configure startup
 RUN yum makecache fast && \
     yum -y install nss_wrapper gettext && \
     yum clean all && \
-    rm -fr /var/cache/yum && \
-    echo 'source $STARTUPDIR/generate_container_user' >> $HOME/.bashrc
-
-COPY ./src/common/scripts $STARTUPDIR
+    rm -fr /var/cache/yum
 
 ### perstent files
 RUN mkdir $DATADIR
@@ -99,6 +99,8 @@ RUN for var in $STARTUPDIR $HOME $DATADIR; do \
     chgrp -R 0 "$var" && chmod -R $verbose a+rw "$var" && find "$var" -type d -exec chmod $verbose a+x {} +; \
     done
 
+### set root password
+RUN echo "root" | passwd --stdin root
 USER 1000
 
 ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
