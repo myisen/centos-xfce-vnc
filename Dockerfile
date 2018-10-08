@@ -101,7 +101,14 @@ RUN for var in $STARTUPDIR $HOME $DATADIR; do \
 
 ### set root password
 RUN echo "root" | passwd --stdin root
-USER 1000
+
+### create user account for headless
+RUN groupadd --gid 54321 headless && \
+    useradd --gid 54321 --uid 54321 --shell /bin/bash --home /headless headless && \
+    usermod -aG wheel headless && \
+    echo "headless" | passwd --stdin headless
+
+USER headless
 
 ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
 CMD ["/bin/bash"]
