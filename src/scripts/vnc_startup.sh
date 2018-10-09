@@ -22,6 +22,7 @@ OPTIONS:
 -w, --wait      (default) keeps the UI and the vncserver up until SIGINT or SIGTERM will received
 -s, --skip      skip the vnc startup and just execute the assigned command.
                 example: docker run consol/centos-xfce-vnc --skip bash
+-c, --ci        do nothing by default
 -d, --debug     enables more detailed startup output
                 e.g. 'docker run consol/centos-xfce-vnc --debug bash'
 -h, --help      print out this help
@@ -29,13 +30,24 @@ OPTIONS:
 Fore more information see: https://github.com/ConSol/docker-headless-vnc-container
 "
 }
+
 if [[ $1 =~ -h|--help ]]; then
     help
     exit 0
 fi
 
+# default of do nothing
+if [[ $1 =~ -c|--ci ]]; then
+    exit 0
+fi
+
 # should also source $STARTUPDIR/generate_container_user
 source $HOME/.bashrc
+
+# if an explcit command is passed then use it directly for ci
+if [[ $1 =~ ^\/ ]]; then
+    exec "$1"
+fi
 
 # add `--skip` to startup args, to skip the VNC startup procedure
 if [[ $1 =~ -s|--skip ]]; then
@@ -82,6 +94,7 @@ vncserver -kill $DISPLAY &> $STARTUPDIR/vnc_startup.log \
 echo -e "start vncserver with param: VNC_COL_DEPTH=$VNC_COL_DEPTH, VNC_RESOLUTION=$VNC_RESOLUTION\n..."
 if [[ $DEBUG == true ]]; then echo "vncserver $DISPLAY -depth $VNC_COL_DEPTH -geometry $VNC_RESOLUTION"; fi
 vncserver $DISPLAY -depth $VNC_COL_DEPTH -geometry $VNC_RESOLUTION &> $STARTUPDIR/no_vnc_startup.log
+VNC_PID=$(cat $HOME/.vnc/*.pid)
 echo -e "start window manager\n..."
 $HOME/wm_startup.sh &> $STARTUPDIR/wm_startup.log
 
@@ -97,7 +110,11 @@ if [[ $DEBUG == true ]] || [[ $1 =~ -t|--tail-log ]]; then
 fi
 
 if [ -z "$1" ] || [[ $1 =~ -w|--wait ]]; then
-    wait $PID_SUB
+    echo -e "\nHolding open vncserver ... press Ctrl + C to exit\n"
+    while [[ -d /proc/${VNC_PID} ]]
+    do
+        sleep 1
+    done
 else
     # unknown option ==> call command
     echo -e "\n\n------------------ EXECUTE COMMAND ------------------"

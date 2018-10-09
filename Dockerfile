@@ -1,9 +1,5 @@
 # This Dockerfile is used to build an headles vnc image based on Centos
 
-## Connection ports for controlling the UI:
-# VNC port:5901
-# noVNC webport, connect via http://IP:6901/?password=vncpassword
-
 FROM centos:7.5.1804
 
 MAINTAINER Marc Schweikert "schweikertm@udev.local"
@@ -20,7 +16,7 @@ ENV HOME=/headless \
     DATADIR=/data \
     VNC_COL_DEPTH=24 \
     VNC_RESOLUTION=1280x1024 \
-    VNC_PW=vncpassword \
+    VNC_PW=password \
     VNC_VIEW_ONLY=false
 WORKDIR $HOME
 
@@ -77,16 +73,16 @@ RUN yum makecache fast && \
     rm /etc/xdg/autostart/xfce-polkit* && \
     /bin/dbus-uuidgen > /etc/machine-id
 
-### deliver files
-COPY src/xfce/ $HOME/
-COPY src/xfce/bashrc $HOME/.bashrc
-COPY src/scripts $STARTUPDIR
-
 ### configure startup
 RUN yum makecache fast && \
     yum -y install nss_wrapper gettext && \
     yum clean all && \
     rm -fr /var/cache/yum
+
+### deliver files
+COPY src/xfce/ $HOME/
+COPY src/xfce/bashrc $HOME/.bashrc
+COPY src/scripts $STARTUPDIR
 
 ### perstent files
 RUN mkdir $DATADIR
@@ -110,4 +106,4 @@ RUN for var in $STARTUPDIR $HOME $DATADIR; do \
 USER headless
 
 ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
-CMD ["/bin/bash"]
+CMD ["--ci"]
