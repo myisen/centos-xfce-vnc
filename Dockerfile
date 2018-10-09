@@ -78,9 +78,9 @@ RUN yum makecache fast && \
     /bin/dbus-uuidgen > /etc/machine-id
 
 ### deliver files
-COPY src/common/xfce/ $HOME/
-COPY src/common/xfce/bashrc $HOME/.bashrc
-COPY src/common/scripts $STARTUPDIR
+COPY src/xfce/ $HOME/
+COPY src/xfce/bashrc $HOME/.bashrc
+COPY src/scripts $STARTUPDIR
 
 ### configure startup
 RUN yum makecache fast && \
@@ -92,13 +92,6 @@ RUN yum makecache fast && \
 RUN mkdir $DATADIR
 VOLUME $DATADIR
 
-### restore permissions
-RUN for var in $STARTUPDIR $HOME $DATADIR; do \
-    find "$var"/ -name '*.sh' -exec chmod $verbose a+x {} +; \
-    find "$var"/ -name '*.desktop' -exec chmod $verbose a+x {} +; \
-    chgrp -R 0 "$var" && chmod -R $verbose a+rw "$var" && find "$var" -type d -exec chmod $verbose a+x {} +; \
-    done
-
 ### set root password
 RUN echo "root" | passwd --stdin root
 
@@ -107,6 +100,12 @@ RUN groupadd --gid 54321 headless && \
     useradd --gid 54321 --uid 54321 --shell /bin/bash --home /headless headless && \
     usermod -aG wheel headless && \
     echo "headless" | passwd --stdin headless
+
+### restore permissions
+RUN for var in $STARTUPDIR $HOME $DATADIR; do \
+    find "$var"/ -name '*.sh' -exec chmod $verbose a+x {} +; \
+    chown -cR headless: $var; \
+    done
 
 USER headless
 
