@@ -10,4 +10,4 @@ if [[ ! -d ${PERSIST} ]]; then
     exit 1
 fi
 
-docker run -p 5901:5901 -v ${PERSIST}:${TARGET} docker-xfce-vnc:latest --wait
+docker run -p 5901:5901 -v ${PERSIST}:${TARGET} centos-xfce-vnc:latest --wait

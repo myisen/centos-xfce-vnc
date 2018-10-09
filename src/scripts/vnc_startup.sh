@@ -94,7 +94,7 @@ vncserver -kill $DISPLAY &> $STARTUPDIR/vnc_startup.log \
 echo -e "start vncserver with param: VNC_COL_DEPTH=$VNC_COL_DEPTH, VNC_RESOLUTION=$VNC_RESOLUTION\n..."
 if [[ $DEBUG == true ]]; then echo "vncserver $DISPLAY -depth $VNC_COL_DEPTH -geometry $VNC_RESOLUTION"; fi
 vncserver $DISPLAY -depth $VNC_COL_DEPTH -geometry $VNC_RESOLUTION &> $STARTUPDIR/no_vnc_startup.log
-VNC_PID=$(cat $HOME/.vnc/*.pid)
+VNC_PID=$(cat ${HOME}/.vnc/$(hostname -s)${DISPLAY}.pid)
 echo -e "start window manager\n..."
 $HOME/wm_startup.sh &> $STARTUPDIR/wm_startup.log
 
@@ -110,7 +110,7 @@ if [[ $DEBUG == true ]] || [[ $1 =~ -t|--tail-log ]]; then
 fi
 
 if [ -z "$1" ] || [[ $1 =~ -w|--wait ]]; then
-    echo -e "\nHolding open vncserver ... press Ctrl + C to exit\n"
+    echo -e "\nHolding open vncserver (PID ${VNC_PID}) ... press Ctrl + C to exit\n"
     while [[ -d /proc/${VNC_PID} ]]
     do
         sleep 1
