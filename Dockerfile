@@ -105,5 +105,4 @@ RUN for var in $STARTUPDIR $HOME $DATADIR; do \
 
 USER headless
 
-ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
-CMD ["--ci"]
+CMD ["/bin/bash"]

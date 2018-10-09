@@ -22,7 +22,6 @@ OPTIONS:
 -w, --wait      (default) keeps the UI and the vncserver up until SIGINT or SIGTERM will received
 -s, --skip      skip the vnc startup and just execute the assigned command.
                 example: docker run consol/centos-xfce-vnc --skip bash
--c, --ci        do nothing by default
 -d, --debug     enables more detailed startup output
                 e.g. 'docker run consol/centos-xfce-vnc --debug bash'
 -h, --help      print out this help
@@ -36,18 +35,8 @@ if [[ $1 =~ -h|--help ]]; then
     exit 0
 fi
 
-# default of do nothing
-if [[ $1 =~ -c|--ci ]]; then
-    exit 0
-fi
-
 # should also source $STARTUPDIR/generate_container_user
 source $HOME/.bashrc
-
-# if an explcit command is passed then use it directly for ci
-if [[ $1 =~ ^\/ ]]; then
-    exec "$1"
-fi
 
 # add `--skip` to startup args, to skip the VNC startup procedure
 if [[ $1 =~ -s|--skip ]]; then
