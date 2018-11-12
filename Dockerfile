@@ -26,10 +26,14 @@ COPY src/repos/RPM-GPG-KEY* /etc/pki/rpm-gpg/
 RUN  rpm --import /etc/pki/rpm-gpg/*
 
 ### update OS
-RUN yum makecache fast && \
+RUN yum-config-manager --save --setopt gpgcheck=0 main && \
+    yum makecache fast && \
     yum -y upgrade && \
     yum clean all && \
     rm -fr /var/cache/yum
+
+# generate our locale (appears to be an upstream bug)
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
 ### Install core tools to make the rest easier
 RUN yum makecache fast && \
@@ -65,9 +69,8 @@ RUN yum makecache fast && \
 
 ### Install xfce UI
 RUN yum makecache fast && \
-    yum -y -x gnome-keyring --skip-broken groups install "Xfce" && \
-    yum -y groups install "Fonts" && \
-    yum -y erase *power* *screensaver* && \
+    yum -y -x gnome-keyring --skip-broken install Thunar xfce4-panel xfce4-session xfce4-settings xfconf xfdesktop xfwm4 NetworkManager-gnome gdm leafpad openssh-askpass orage polkit-gnome thunar-archive-plugin thunar-volman tumbler xfce4-appfinder xfce4-icon-theme xfce4-power-manager xfce4-pulseaudio-plugin xfce4-session-engines xfce4-terminal xfwm4-theme-nodoka xfwm4-themes pinentry-gtk && \
+    yum -y remove *\power\* \*screensaver\* && \
     yum clean all && \
     rm -fr /var/cache/yum && \
     rm /etc/xdg/autostart/xfce-polkit* && \
