@@ -1,6 +1,7 @@
 # This Dockerfile is used to build an headles vnc image based on Centos
 
-FROM centos:7.5.1804
+# FROM centos:7.5.1804
+# FROM openanolis/anolisos:7.9-x86_64
 
 MAINTAINER Marc Schweikert "schweikertm@udev.local"
 
